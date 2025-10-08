@@ -1,0 +1,61 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score
+import os
+
+# File paths
+daily_file_path = r"C:\Users\mbodrudd\OneDrive - University of Guelph\Zion\Zion PhD study\ABCA\ZionAnalysis\NewAnalysisAug\FinalAnalysisAug20\Daily_Flashiness_Index.csv"
+monthly_file_path = r"C:\Users\mbodrudd\OneDrive - University of Guelph\Zion\Zion PhD study\ABCA\ZionAnalysis\NewAnalysisAug\FinalAnalysisAug20\Monthly_Flashiness_Index.csv"
+output_dir = r"C:\Users\mbodrudd\OneDrive - University of Guelph\Zion\Zion PhD study\ABCA\ZionAnalysis\NewAnalysisAug\FinalAnalysisAug20"
+
+# Load the daily flashiness index data
+daily_flashiness_data = pd.read_csv(daily_file_path, parse_dates=['datetime'])
+daily_flashiness_data = daily_flashiness_data[['datetime', 'daily_flashiness_index']].dropna()
+
+# Load the monthly flashiness index data
+monthly_flashiness_data = pd.read_csv(monthly_file_path, parse_dates=['datetime'])
+monthly_flashiness_data = monthly_flashiness_data[['datetime', 'monthly_flashiness_index']].dropna()
+
+def plot_flashiness_index(data, value_column, title, ylabel, output_filename):
+    # Filter out non-positive values to avoid issues with log transformation
+    data = data[data[value_column] > 0]
+
+    # Prepare data for linear regression
+    X = np.array((data['datetime'] - data['datetime'].min()).dt.days).reshape(-1, 1)
+    y = data[value_column].values
+
+    # Log-transform the data
+    y_log = np.log(y)
+
+    # Fit the linear regression model on log-transformed data
+    model = LinearRegression().fit(X, y_log)
+    trendline_log = model.predict(X)
+    trendline = np.exp(trendline_log)
+    r_squared = r2_score(y_log, trendline_log)
+    slope = model.coef_[0]
+    intercept = model.intercept_
+
+    # Plot the flashiness index with trend line
+    plt.figure(figsize=(10, 6))
+    plt.plot(data['datetime'], y, label=f'{title}', color='blue')
+    plt.plot(data['datetime'], trendline, label=f'Trend Line: log(y) = {slope:.6f}x + {intercept:.6f}\n$R^2$ = {r_squared:.4f}', color='red')
+    plt.yscale('log')
+    plt.xlabel('Date')
+    plt.ylabel(ylabel)
+    plt.title(title)
+    plt.legend()
+    plt.grid(True)
+
+    # Save the plot as a PNG file
+    output_path = os.path.join(output_dir, output_filename)
+    plt.savefig(output_path)
+    plt.close()
+    print(f"Plot saved to: {output_path}")
+
+# Plot daily flashiness index with trend line and save the output
+plot_flashiness_index(daily_flashiness_data, 'daily_flashiness_index', 'Daily Flashiness Index with Trend Line', 'Daily Flashiness Index', 'Daily_Flashiness_Index_Trend.png')
+
+# Plot monthly flashiness index with trend line and save the output
+plot_flashiness_index(monthly_flashiness_data, 'monthly_flashiness_index', 'Monthly Flashiness Index with Trend Line', 'Monthly Flashiness Index', 'Monthly_Flashiness_Index_Trend.png')

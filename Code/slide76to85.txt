@@ -1,0 +1,43 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.metrics import mean_squared_error, r2_score
+
+# Specify the path to your dataset
+file_path = r"C:\Users\mbodrudd\OneDrive - University of Guelph\Zion\Zion PhD study\ABCA\SepInputOutput\InputData\Slide75\RecalculatedData.csv"
+
+# Load the dataset
+data = pd.read_csv(file_path)
+
+# Prepare the predictors and targets
+X = data[['Total_BaseFlow_CMS', 'Total_StreamFlow_CMS', 'MonthlyTotalPrecipitation_mm', 'AvgTemp_degC', 'TotalWaterVolume_m3', 'TotalRunoff_mm']]
+targets = data[['Mass_Export_TP_kg_ha', 'Mass_Export_TN_kg_ha', 'Mass_Export_DRP_kg_ha', 'Mass_Export_NO3_kg_ha', 'Mass_Export_TKN_kg_ha', 'Mass_Export_TSS_kg_ha']]
+
+# Dictionary to hold models and results
+results = {}
+
+# Train Gradient Boosting models for each target
+for target in targets.columns:
+    y = targets[target]
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    model = GradientBoostingRegressor(n_estimators=100, random_state=42)
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+    mse = mean_squared_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
+    feature_importance = model.feature_importances_
+    results[target] = {
+        'MSE': mse,
+        'R²': r2,
+        'Feature Importance': feature_importance
+    }
+
+# Print the results for each nutrient
+for nutrient, metrics in results.items():
+    print(f"Results for {nutrient}:")
+    print(f"MSE: {metrics['MSE']}")
+    print(f"R²: {metrics['R²']}")
+    print("Feature Importance:")
+    for idx, col in enumerate(X.columns):
+        print(f"{col}: {metrics['Feature Importance'][idx]:.2f}")
+    print("\n")

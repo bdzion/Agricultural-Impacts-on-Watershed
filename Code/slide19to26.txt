@@ -1,0 +1,59 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.linear_model import LinearRegression
+import numpy as np
+import os
+
+# Define the file path and output directory
+file_path = r"C:\Users\mbodrudd\OneDrive - University of Guelph\Zion\Zion PhD study\ABCA\ZionAnalysis\NewAnalysisAug\FinalAnalysisAug20\AllData_Expt_Crosstabv3.csv"
+output_dir = r"C:\Users\mbodrudd\OneDrive - University of Guelph\Zion\Zion PhD study\ABCA\ZionAnalysis\NewAnalysisAug\FinalAnalysisAug20\Plots"
+
+# Create the output directory if it doesn't exist
+os.makedirs(output_dir, exist_ok=True)
+
+# Load the CSV file
+data = pd.read_csv(file_path)
+
+# Convert 'Datetimestamp' to datetime format
+data['Datetimestamp'] = pd.to_datetime(data['Datetimestamp'], format='%d/%m/%Y %H:%M')
+
+# Exclude the flow-related parameter
+parameters_to_plot = data.columns.drop(['Datetimestamp', 'Flow'])
+
+# Function to create and save time series plots with trend lines, R², and equation
+def plot_and_save_time_series_with_trend(data, parameter, output_dir):
+    plt.figure(figsize=(15, 4))
+    
+    # Drop NaN values for the current parameter
+    non_nan_data = data[['Datetimestamp', parameter]].dropna()
+    
+    # Scatter plot
+    plt.scatter(non_nan_data['Datetimestamp'], non_nan_data[parameter], color='orange', label=parameter)
+    
+    # Trend line
+    X = non_nan_data['Datetimestamp'].map(pd.Timestamp.toordinal).values.reshape(-1, 1)  # Convert dates to ordinal for regression
+    y = non_nan_data[parameter].values
+    model = LinearRegression().fit(X, y)
+    trend = model.predict(X)
+    
+    plt.plot(non_nan_data['Datetimestamp'], trend, color='blue', label='Trend Line')
+    
+    # Calculate R² and add equation to the plot
+    r_squared = model.score(X, y)
+    equation_text = f'y = {model.coef_[0]:.3e}x + {model.intercept_:.3f}\nR² = {r_squared:.3f}'
+    plt.text(0.05, 0.95, equation_text, transform=plt.gca().transAxes, fontsize=12, verticalalignment='top')
+    
+    plt.title(f'Time Series of {parameter} with Trend Line')
+    plt.xlabel('Date')
+    plt.ylabel(parameter)
+    plt.grid(True)
+    
+    # Save the plot to the specified output directory
+    output_path = os.path.join(output_dir, f'{parameter}_Time_Series_with_Trend.png')
+    plt.savefig(output_path, bbox_inches='tight')
+    plt.close()  # Close the plot to free up memory
+
+# Generate and save the plots for each parameter
+for param in parameters_to_plot:
+    plot_and_save_time_series_with_trend(data, param, output_dir)

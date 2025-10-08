@@ -1,0 +1,46 @@
+import pandas as pd
+from sklearn.experimental import enable_iterative_imputer
+from sklearn.impute import IterativeImputer
+
+# Load the data
+file_path = r'C:\Users\mbodrudd\OneDrive - University of Guelph\Zion\Zion PhD study\ABCA\ZionAnalysis\NewAnalysisAug\FinalAnalysisAug20\FinalCalculatedData\All_MonthlyRecalculatedData.csv'
+data = pd.read_csv(file_path)
+
+# Columns for Linear Interpolation
+columns_linear_interpolation = [
+    'Total_Mass_Load_NO3_kg',
+    'FWMC_NO3_mg_L',
+    'Mass_Export_NO3_kg_ha',
+    'Total_Mass_Load_TN_kg',
+    'FWMC_TN_mg_L',
+    'Mass_Export_TN_kg_ha',
+    'Total_Mass_Load_DRP_kg',
+    'FWMC_DRP_mg_L',
+    'Mass_Export_DRP_kg_ha',
+    'Total_Mass_Load_TP_kg',
+    'FWMC_TP_mg_L',
+    'Mass_Export_TP_kg_ha'
+]
+
+# Apply Linear Interpolation
+data[columns_linear_interpolation] = data[columns_linear_interpolation].interpolate(method='linear', limit_direction='forward', axis=0)
+
+# Columns for Multiple Imputation
+columns_multiple_imputation = [
+    'Total_Mass_Load_TKN_kg',
+    'FWMC_TKN_mg_L',
+    'Mass_Export_TKN_kg_ha',
+    'Total_Mass_Load_TSS_kg',
+    'FWMC_TSS_mg_L',
+    'Mass_Export_TSS_kg_ha'
+]
+
+# Apply Multiple Imputation
+iterative_imputer = IterativeImputer(max_iter=10, random_state=0)
+data[columns_multiple_imputation] = iterative_imputer.fit_transform(data[columns_multiple_imputation])
+
+# Save the result to a new CSV file
+output_file_path = r'C:\Users\mbodrudd\OneDrive - University of Guelph\Zion\Zion PhD study\ABCA\ZionAnalysis\NewAnalysisAug\FinalAnalysisAug20\FinalCalculatedData\Imputed_MonthlyRecalculatedData.csv'
+data.to_csv(output_file_path, index=False)
+
+print(f"Data imputation completed. File saved at {output_file_path}")

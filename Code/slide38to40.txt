@@ -1,0 +1,58 @@
+import pandas as pd
+
+# Load the data for DRPF2
+file_path = r"C:\Users\mbodrudd\OneDrive - University of Guelph\Zion\Zion PhD study\ABCA\ZionAnalysis\NewAnalysisAug\FinalAnalysisAug20\DRPF2.csv"
+data = pd.read_csv(file_path)
+
+# Parse datetime fields
+data['DatetimeWQ'] = pd.to_datetime(data['DatetimesWQ'], dayfirst=True)
+data['DatetimeF'] = pd.to_datetime(data['DatetimesF'], dayfirst=True)
+
+# Convert DRP from mg/L to kg/m^3
+data['DRP_kgm3'] = data['DRP[mg/L]'] * 0.001
+
+# Calculate interpolated concentration and mean flow for each row
+next_concentration = data['DRP_kgm3'].shift(-1)
+next_flow = data['Flow[cumec]'].shift(-1)
+data['c_int'] = (data['DRP_kgm3'] + next_concentration.fillna(data['DRP_kgm3'])) / 2
+data['q_j'] = (data['Flow[cumec]'] + next_flow.fillna(data['Flow[cumec]'])) / 2
+
+# Calculate the time difference in seconds between measurements
+time_diff = (data['DatetimeWQ'].shift(-1) - data['DatetimeWQ']).dt.total_seconds()
+data['Time_diff_sec'] = time_diff.ffill()  # Use ffill() directly
+
+# Calculate mass load contribution from each interval
+data['Mass_Load_kg'] = data['c_int'] * data['q_j'] * data['Time_diff_sec']
+
+# Calculate total stream flow volume for each interval in liters
+data['Total_Stream_Volume_L'] = data['Flow[cumec]'] * data['Time_diff_sec'] * 1000
+
+# Group by month to sum up values
+data['Month'] = data['DatetimeWQ'].dt.to_period('M')
+monthly_totals = data.groupby('Month').agg(
+    Total_Mass_Load=('Mass_Load_kg', 'sum'),
+    Total_Stream_Volume=('Total_Stream_Volume_L', 'sum')
+)
+
+# Calculate Flow-Weighted Mean Concentration (FWMC) in mg/L
+monthly_totals['FWMC_mg_L'] = (monthly_totals['Total_Mass_Load'] / monthly_totals['Total_Stream_Volume']) * 1000
+
+# Watershed area in hectares
+watershed_area_ha = 1430
+
+# Calculate Mass Export Load per hectare
+monthly_totals['Mass_Export_kg_ha'] = monthly_totals['Total_Mass_Load'] / watershed_area_ha
+
+# Create a complete range of months from the data
+min_month = data['DatetimeWQ'].min().to_period('M')
+max_month = data['DatetimeWQ'].max().to_period('M')
+all_months = pd.period_range(min_month, max_month, freq='M')
+
+# Reindex the dataframe to include all months, filling missing months with NaN
+monthly_totals = monthly_totals.reindex(all_months, fill_value=0)
+
+# Save the results to a CSV file
+output_path = r"C:\Users\mbodrudd\OneDrive - University of Guelph\Zion\Zion PhD study\ABCA\ZionAnalysis\NewAnalysisAug\FinalAnalysisAug20\FinalCalculatedData\FinalLoadsAnalysisDRP.csv"
+monthly_totals.to_csv(output_path)
+
+print("Calculations completed and results are saved to:", output_path)

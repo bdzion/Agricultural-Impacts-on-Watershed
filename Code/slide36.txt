@@ -1,0 +1,38 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+
+# Load the data from the provided CSV file
+file_path = r'C:\Users\mbodrudd\OneDrive - University of Guelph\Zion\Zion PhD study\ABCA\ZionAnalysis\NewWQdata\AllData_Expt_Crosstabv2.csv'
+data = pd.read_csv(file_path)
+
+# Convert Datetimestamp to datetime
+data['Datetimestamp'] = pd.to_datetime(data['Datetimestamp'], format='%d/%m/%Y %H:%M')
+
+# Drop the Datetimestamp column for correlation analysis
+data_numeric = data.drop(columns=['Datetimestamp'])
+
+# Run the correlation analysis
+correlation_matrix = data_numeric.corr()
+
+# Generate a mask for the upper triangle
+mask = np.triu(np.ones_like(correlation_matrix, dtype=bool))
+
+# Set up the matplotlib figure
+plt.figure(figsize=(14, 10))
+
+# Draw the heatmap with the mask and correct aspect ratio
+sns.heatmap(correlation_matrix, 
+            mask=mask, 
+            annot=True, 
+            cmap='coolwarm', 
+            fmt='.2f', 
+            linewidths=0.5, 
+            cbar_kws={'shrink': 0.75, 'aspect': 30},
+            annot_kws={"size": 10})
+
+plt.xticks(rotation=45, ha='right', fontsize=12)
+plt.yticks(fontsize=12)
+plt.title('Pearson Correlation Matrix', fontsize=16, fontweight='bold')
+plt.show()

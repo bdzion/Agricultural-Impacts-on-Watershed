@@ -1,0 +1,43 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.stats import linregress
+
+# Load the data
+file_path = r'C:\Users\mbodrudd\OneDrive - University of Guelph\Zion\Zion PhD study\ABCA\ZionAnalysis\NewAnalysisAug\NO3F.csv'
+data = pd.read_csv(file_path)
+
+# Convert the datetime columns to datetime objects
+data['DatetimesWQ'] = pd.to_datetime(data['DatetimesWQ'], format='%d/%m/%Y %H:%M')
+data['DatetimesF'] = pd.to_datetime(data['DatetimesF'], format='%d/%m/%Y %H:%M')
+
+# Drop rows where either NO3 or Flow is NaN
+data_clean = data.dropna(subset=['NO3[mg/L]', 'Flow[cumec]'])
+
+# Scatter plot of NO3 vs Flow
+plt.figure(figsize=(10, 6))
+plt.scatter(data_clean['Flow[cumec]'], data_clean['NO3[mg/L]'], color='b', label='NO3')
+
+# Calculate correlation
+correlation = data_clean['Flow[cumec]'].corr(data_clean['NO3[mg/L]'])
+
+# Perform linear regression
+slope, intercept, r_value, p_value, std_err = linregress(data_clean['Flow[cumec]'], data_clean['NO3[mg/L]'])
+
+# Plot the regression line
+x = np.linspace(data_clean['Flow[cumec]'].min(), data_clean['Flow[cumec]'].max(), 100)
+y = slope * x + intercept
+plt.plot(x, y, color='r', label='Fit line')
+
+# Add correlation and equation to the plot
+plt.text(0.05, 0.95, f'Correlation: {correlation:.2f}', transform=plt.gca().transAxes, fontsize=12, verticalalignment='top')
+plt.text(0.05, 0.90, f'Equation: y = {slope:.2f}x + {intercept:.2f}', transform=plt.gca().transAxes, fontsize=12, verticalalignment='top')
+
+# Adding labels and title
+plt.xlabel('Flow (cumec)')
+plt.ylabel('NO3 (mg/L)')
+plt.title('Scatter Plot of NO3 vs Flow with Correlation and Fit Line')
+plt.legend()
+
+# Show the plot
+plt.show()

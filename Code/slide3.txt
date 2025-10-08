@@ -1,0 +1,75 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+
+# Define the path to the data files
+base_path = r"C:\Users\mbodrudd\OneDrive - University of Guelph\Zion\Zion PhD study\ABCA\ZionAnalysis\NewAnalysisAug\FinalAnalysisAug20"
+
+# Load the data from the CSV files
+precipitation_df = pd.read_csv(f'{base_path}/Precipitation.csv')
+daily_flow_df = pd.read_csv(f'{base_path}/Daily_Flow.csv')
+mean_temperature_df = pd.read_csv(f'{base_path}/MeanTemperatureGulGul5.csv')
+
+# Convert the 'Date' and 'datetime' columns to datetime format
+precipitation_df['Date'] = pd.to_datetime(precipitation_df['Date'], format='%d/%m/%Y')
+daily_flow_df['datetime'] = pd.to_datetime(daily_flow_df['datetime'], format='%d/%m/%Y')
+mean_temperature_df['Date'] = pd.to_datetime(mean_temperature_df['Date'], format='%d/%m/%Y')
+
+# Merge the dataframes on the date columns
+merged_df = pd.merge(precipitation_df, mean_temperature_df, on='Date', how='outer')
+merged_df = pd.merge(merged_df, daily_flow_df, left_on='Date', right_on='datetime', how='outer').drop(columns='datetime')
+
+# Plot the data
+fig, ax1 = plt.subplots(figsize=(15, 7))
+
+# Plot measured flow as a line chart on the primary y-axis
+ax1.plot(merged_df['Date'], merged_df['Value[cumec]'], 'b-', label='Measured Flow (m³/s)')
+ax1.set_xlabel('Year')
+ax1.set_ylabel('Flow (m³/s)', color='blue')
+ax1.tick_params(axis='y', labelcolor='blue')
+
+# Remove the grid lines
+ax1.grid(False)
+
+# Format the date on the x-axis to show only the year
+ax1.xaxis.set_major_locator(mdates.YearLocator())
+ax1.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+plt.setp(ax1.xaxis.get_majorticklabels(), rotation=45, ha='right')
+
+# Remove unnecessary spines to improve aesthetics
+ax1.spines['top'].set_visible(False)
+ax1.spines['right'].set_visible(False)
+
+# Create a secondary y-axis for precipitation as a bar chart
+ax2 = ax1.twinx()
+ax2.invert_yaxis()  # Invert the secondary y-axis
+ax2.bar(merged_df['Date'], merged_df['Precipitation_mm'], color='orange', alpha=0.6, edgecolor='darkorange', label='Precipitation (mm)')
+ax2.set_ylabel('Precipitation (mm)', color='orange')
+ax2.tick_params(axis='y', labelcolor='orange')
+
+# Remove the right spine from the secondary y-axis
+ax2.spines['top'].set_visible(False)
+
+# Create another x-axis on the top
+ax3 = ax1.twiny()
+ax3.set_xlim(ax1.get_xlim())
+ax3.xaxis.set_ticks_position('top')
+ax3.xaxis.set_label_position('top')
+ax3.set_xlabel('Year')
+
+# Format the date on the top x-axis to show only the year
+ax3.xaxis.set_major_locator(mdates.YearLocator())
+ax3.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+plt.setp(ax3.xaxis.get_majorticklabels(), rotation=45, ha='left')
+
+# Remove the bottom spine from the secondary x-axis
+ax3.spines['bottom'].set_visible(False)
+
+# Add legends
+fig.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=3)
+
+# Add titles
+plt.title('Precipitation and Flow Comparison')
+
+# Show plot
+plt.show()

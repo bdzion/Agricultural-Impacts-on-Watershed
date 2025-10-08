@@ -1,0 +1,62 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+
+# Define the path to your data files
+data_path = r"C:\Users\mbodrudd\OneDrive - University of Guelph\Zion\Zion PhD study\ABCA\ZionAnalysis\NewAnalysisAug\FinalAnalysisAug20"
+
+# Load the data from the CSV files
+base_flow_file = f"{data_path}\\Calculated_Baseflow.csv"
+precipitation_file = f"{data_path}\\Precipitation.csv"
+
+base_flow_data = pd.read_csv(base_flow_file)
+precipitation_data = pd.read_csv(precipitation_file)
+
+# Convert the datetime columns to pandas datetime objects
+base_flow_data['datetime'] = pd.to_datetime(base_flow_data['datetime'], format='%d/%m/%Y')
+precipitation_data['Date'] = pd.to_datetime(precipitation_data['Date'], format='%d/%m/%Y')
+
+# Merge the data on the date columns with an outer join to include all data points
+merged_data = pd.merge(precipitation_data, base_flow_data, left_on='Date', right_on='datetime', how='outer')
+
+# Plot the data with improved visualization
+fig, ax1 = plt.subplots(figsize=(15, 7))
+
+# Plot measured flow as a line chart on the primary y-axis
+ax1.plot(merged_data['Date'], merged_data['Streamflow'], 'b-', label='Stream Flow (m³/s)')
+ax1.plot(merged_data['Date'], merged_data['Overall Baseflow'], 'g-', label='Overall Base Flow (m³/s)')
+ax1.set_xlabel('Year')
+ax1.set_ylabel('Flow (m³/s)', color='black')
+ax1.tick_params(axis='y', labelcolor='black')
+ax1.grid(False)  # Disable grid lines
+
+# Format the date on the x-axis to show only the year
+ax1.xaxis.set_major_locator(mdates.YearLocator())
+ax1.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+plt.setp(ax1.xaxis.get_majorticklabels(), rotation=45, ha='right')
+
+# Create a secondary y-axis for precipitation as a bar chart
+ax2 = ax1.twinx()
+ax2.invert_yaxis()  # Invert the secondary y-axis
+ax2.bar(merged_data['Date'], merged_data['Precipitation_mm'], color='orange', alpha=0.6, edgecolor='darkorange', label='Precipitation (mm)')
+ax2.set_ylabel('Precipitation (mm)', color='orange')
+ax2.tick_params(axis='y', labelcolor='orange')
+
+# Create another x-axis on the top
+ax3 = ax1.twiny()
+ax3.set_xlim(ax1.get_xlim())
+ax3.xaxis.set_ticks_position('top')
+ax3.xaxis.set_label_position('top')
+ax3.set_xlabel('Year')
+
+# Format the date on the top x-axis to show only the year
+ax3.xaxis.set_major_locator(mdates.YearLocator())
+ax3.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+plt.setp(ax3.xaxis.get_majorticklabels(), rotation=45, ha='left')
+
+# Place the legend below the plot
+fig.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=3)
+
+# Show the plot
+plt.title('Precipitation, Stream Flow, and Base Flow Comparison')
+plt.show()

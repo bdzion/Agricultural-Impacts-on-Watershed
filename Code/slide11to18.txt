@@ -1,0 +1,32 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Load the data
+file_path = r'C:\Users\mbodrudd\OneDrive - University of Guelph\Zion\Zion PhD study\ABCA\ZionAnalysis\NewAnalysisAug\FinalAnalysisAug20\NO3F.csv'
+data = pd.read_csv(file_path)
+
+# Convert the datetime columns to datetime objects
+data['DatetimesWQ'] = pd.to_datetime(data['DatetimesWQ'], format='%d/%m/%Y %H:%M')
+data['DatetimesF'] = pd.to_datetime(data['DatetimesF'], format='%d/%m/%Y %H:%M')
+
+# Create a figure and a set of subplots
+fig, ax1 = plt.subplots(figsize=(14, 7))
+
+# Plot Flow values on the first y-axis
+ax1.plot(data['DatetimesF'], data['Flow[cumec]'], color='r', label='Flow (cumec)')
+ax1.set_xlabel('Date')
+ax1.set_ylabel('Hourly Mean Flow (cumec)', color='r')
+ax1.tick_params(axis='y', labelcolor='r')
+
+# Create a second y-axis to plot NO3 values
+ax2 = ax1.twinx()
+ax2.scatter(data['DatetimesWQ'], data['NO3[mg/L]'], color='b', label='NO3 (mg/L)', s=10, zorder=5)
+ax2.set_ylabel('NO3 (mg/L)', color='b')
+ax2.tick_params(axis='y', labelcolor='b')
+
+# Adding title and legend
+plt.title('Time Series of NO3 and Flow')
+fig.tight_layout()  # To make sure the labels and titles don't overlap
+
+# Show the plot
+plt.show()

@@ -1,0 +1,22 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Load the data from the specified CSV file
+file_path = r"C:\Users\mbodrudd\OneDrive - University of Guelph\Zion\Zion PhD study\ABCA\ZionAnalysis\NewAnalysisAug\FinalAnalysisAug20\Calculated_Baseflow.csv"
+data = pd.read_csv(file_path)
+
+# Convert 'datetime' to datetime format for proper plotting
+data['datetime'] = pd.to_datetime(data['datetime'], format='%d/%m/%Y')
+
+# Plotting the time series for Streamflow and the Overall Baseflow
+plt.figure(figsize=(14, 7))
+plt.plot(data['datetime'], data['Streamflow'], label='Streamflow', color='blue')
+plt.plot(data['datetime'], data['Overall Baseflow'], label='Overall Baseflow', color='orange')
+
+# Formatting the plot
+plt.title('Time Series of Streamflow and Baseflow')
+plt.xlabel('Date')
+plt.ylabel('Flow')
+plt.legend()
+plt.grid(True)
+plt.show()

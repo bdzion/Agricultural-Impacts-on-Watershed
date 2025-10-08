@@ -1,0 +1,34 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load the data from the correct path
+file_path = r'C:\Users\mbodrudd\OneDrive - University of Guelph\Zion\Zion PhD study\ABCA\SepInputOutput\InputData\Slide75\RecalculatedData.csv'
+data = pd.read_csv(file_path)
+
+# Assuming 'Year_Month' is the column to drop, if it's not numerical
+if 'Year_Month' in data.columns:
+    data_numeric = data.drop(columns=['Year_Month'])
+else:
+    data_numeric = data  # Use data as is if 'Year_Month' doesn't exist
+
+# Calculate Spearman correlation matrix
+spearman_correlation_matrix = data_numeric.corr(method='spearman')
+
+# Mask the upper triangle of the correlation matrix to remove duplication
+mask = np.triu(np.ones_like(spearman_correlation_matrix, dtype=bool))
+
+# Set up the matplotlib figure
+plt.figure(figsize=(14, 12))
+
+# Draw the heatmap with the mask
+sns.heatmap(spearman_correlation_matrix, mask=mask, annot=True, fmt=".2f", cmap='coolwarm', cbar=True, linewidths=0.5)
+
+# Add titles and labels
+plt.title('Spearman Correlation Matrix of All Parameters', fontsize=16)
+plt.xticks(rotation=45, ha='right', fontsize=12)
+plt.yticks(fontsize=12)
+
+# Show the plot
+plt.show()

@@ -1,0 +1,68 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.linear_model import LinearRegression
+import os
+
+# Define the file paths
+data_file_path = r"C:\Users\mbodrudd\OneDrive - University of Guelph\Zion\Zion PhD study\ABCA\ZionAnalysis\NewAnalysisAug\FinalAnalysisAug20\FinalCalculatedData\Imputed_MonthlyRecalculatedData.csv"
+output_dir = r"C:\Users\mbodrudd\OneDrive - University of Guelph\Zion\Zion PhD study\ABCA\ZionAnalysis\NewAnalysisAug\FinalAnalysisAug20\FinalCalculatedData\plots"
+
+# Load the data
+data = pd.read_csv(data_file_path)
+
+# Convert "Year_Month" to datetime format
+data['Year_Month'] = pd.to_datetime(data['Year_Month'])
+
+# Ensure the output directory exists
+os.makedirs(output_dir, exist_ok=True)
+
+# Function to create a time series plot with a trend line and save it
+def plot_time_series_with_trend(data, x_column, y_column, output_dir):
+    plt.figure(figsize=(10, 6))
+    x = np.array((data[x_column] - data[x_column].min()).dt.days).reshape(-1, 1)  # Convert time to ordinal numbers for linear regression
+    y = data[y_column].values
+    
+    # Fit linear regression model
+    model = LinearRegression()
+    model.fit(x, y)
+    trend_line = model.predict(x)
+    
+    # Calculate R^2 value
+    r_squared = model.score(x, y)
+    
+    # Plotting
+    plt.plot(data[x_column], y, label=f'{y_column} Data', color='blue')
+    plt.plot(data[x_column], trend_line, color='red')
+    
+    # Equation of the trend line and R^2 value
+    slope = model.coef_[0]
+    intercept = model.intercept_
+    equation = f'y = {slope:.2f}x + {intercept:.2f}'
+    r2_text = f'R² = {r_squared:.2f}'
+    
+    # Adding text to the plot in light color
+    plt.text(0.05, 0.95, equation, transform=plt.gca().transAxes, fontsize=12, verticalalignment='top', color='gray')
+    plt.text(0.05, 0.90, r2_text, transform=plt.gca().transAxes, fontsize=12, verticalalignment='top', color='gray')
+    
+    plt.title(f'Monthly Time Series of {y_column}')
+    plt.xlabel('Date')
+    plt.ylabel(y_column)
+    plt.grid(True)
+    
+    # Replace invalid characters for filenames
+    safe_column_name = y_column.replace('/', '_')
+    
+    # Save the plot
+    output_file = os.path.join(output_dir, f'{safe_column_name}_TimeSeries.png')
+    plt.savefig(output_file)
+    plt.close()
+
+# List of all columns except "Year_Month" to plot
+columns_to_plot = data.columns.difference(['Year_Month'])
+
+# Plot and save each column
+for column in columns_to_plot:
+    plot_time_series_with_trend(data, 'Year_Month', column, output_dir)
+
+print(f"Plots have been saved to {output_dir}")

@@ -1,0 +1,32 @@
+import pandas as pd
+
+# Load the hourly flow data
+file_path = r"C:\Users\mbodrudd\OneDrive - University of Guelph\Zion\Zion PhD study\ABCA\ZionAnalysis\NewAnalysisAug\FinalAnalysisAug20\Hourly_Flow_Data.csv"
+hourly_flow_data = pd.read_csv(file_path)
+
+# Convert the datetime column to datetime object
+hourly_flow_data['datetime'] = pd.to_datetime(hourly_flow_data['datetime'], format='%d/%m/%Y %H:%M')
+
+# Aggregate the hourly data into monthly mean flow values
+monthly_flow_data = hourly_flow_data.resample('ME', on='datetime').mean()
+
+# Rename the column for clarity
+monthly_flow_data.rename(columns={'Value[cumec]': 'mean_monthly_flow'}, inplace=True)
+
+# Calculate the absolute month-to-month changes
+monthly_flow_data['month_to_month_change'] = monthly_flow_data['mean_monthly_flow'].diff().abs()
+
+# Calculate the cumulative total discharge up to each month
+monthly_flow_data['cumulative_discharge'] = monthly_flow_data['mean_monthly_flow'].cumsum()
+
+# Calculate the monthly R-B Flashiness Index
+monthly_flow_data['monthly_flashiness_index'] = monthly_flow_data['month_to_month_change'] / monthly_flow_data['cumulative_discharge']
+
+# Drop the rows with NaN values (first row will have NaN due to diff operation)
+monthly_flashiness_data = monthly_flow_data.dropna()
+
+# Save the results to a CSV file
+output_file_path = r"C:\Users\mbodrudd\OneDrive - University of Guelph\Zion\Zion PhD study\ABCA\ZionAnalysis\NewAnalysisAug\FinalAnalysisAug20\Monthly_Flashiness_Index.csv"
+monthly_flashiness_data.to_csv(output_file_path)
+
+print("Monthly R-B Flashiness Index calculation complete. Output saved to:", output_file_path)

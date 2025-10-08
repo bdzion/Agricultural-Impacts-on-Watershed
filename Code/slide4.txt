@@ -1,0 +1,58 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Define the path to the data files
+base_path = r"C:\Users\mbodrudd\OneDrive - University of Guelph\Zion\Zion PhD study\ABCA\ZionAnalysis\NewAnalysisAug\FinalAnalysisAug20"
+
+# Load the data from the CSV files
+precipitation_df = pd.read_csv(f'{base_path}/Precipitation.csv')
+daily_flow_df = pd.read_csv(f'{base_path}/Daily_Flow.csv')
+mean_temperature_df = pd.read_csv(f'{base_path}/MeanTemperatureGulGul5.csv')
+
+# Convert the 'Date' and 'datetime' columns to datetime format
+precipitation_df['Date'] = pd.to_datetime(precipitation_df['Date'], format='%d/%m/%Y')
+daily_flow_df['datetime'] = pd.to_datetime(daily_flow_df['datetime'], format='%d/%m/%Y')
+mean_temperature_df['Date'] = pd.to_datetime(mean_temperature_df['Date'], format='%d/%m/%Y')
+
+# Merge the dataframes on the date columns
+merged_df = pd.merge(precipitation_df, mean_temperature_df, on='Date', how='outer')
+merged_df = pd.merge(merged_df, daily_flow_df, left_on='Date', right_on='datetime', how='outer').drop(columns='datetime')
+
+# Plot the data
+fig, ax1 = plt.subplots(figsize=(15, 7))
+
+# Plot measured flow as a line chart on the primary y-axis
+ax1.plot(merged_df['Date'], merged_df['Value[cumec]'], color='blue', alpha=0.7, linewidth=2, label='Measured Flow (m³/s)')
+ax1.set_xlabel('Date')
+ax1.set_ylabel('Flow (m³/s)', color='blue')
+ax1.tick_params(axis='y', labelcolor='blue')
+ax1.grid(False)  # Disable grid lines
+
+# Create a secondary y-axis for precipitation as a bar chart
+ax2 = ax1.twinx()
+ax2.invert_yaxis()  # Invert the secondary y-axis
+ax2.bar(merged_df['Date'], merged_df['Precipitation_mm'], color='green', alpha=0.4, edgecolor='darkgreen', label='Precipitation (mm)')
+ax2.set_ylabel('Precipitation (mm)', color='green')
+ax2.tick_params(axis='y', labelcolor='green')
+
+# Create another x-axis on the top
+ax3 = ax1.twiny()
+ax3.set_xlim(ax1.get_xlim())
+ax3.xaxis.set_ticks_position('top')
+ax3.xaxis.set_label_position('top')
+ax3.set_xlabel('Date')
+
+# Create another secondary y-axis for mean temperature
+ax4 = ax3.twinx()
+ax4.plot(merged_df['Date'], merged_df['AvgTemp'], color='orange', alpha=0.7, linewidth=2, label='Average Temperature (°C)')
+ax4.set_ylabel('Average Temperature (°C)', color='orange')
+ax4.tick_params(axis='y', labelcolor='orange')
+
+# Place the legend below the plot
+fig.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=3)
+
+# Add title
+plt.title('Mean Daily Flow, Precipitation, and Average Daily Temperature Comparison')
+
+# Show plot
+plt.show()
